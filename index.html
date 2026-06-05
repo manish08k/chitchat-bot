@@ -1,0 +1,1197 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ChitChat — AI Assistant</title>
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Mono:ital,wght@0,300;0,400;1,300&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #0a0a0f;
+    --surface: #111118;
+    --surface2: #1a1a24;
+    --border: #2a2a3a;
+    --accent: #7c6aff;
+    --accent2: #ff6ab0;
+    --accent3: #6affb8;
+    --text: #e8e8f0;
+    --text-muted: #6b6b8a;
+    --user-bubble: #1e1a3a;
+    --ai-bubble: #111118;
+    --glow: rgba(124,106,255,0.15);
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'Syne', sans-serif;
+    height: 100vh;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+  }
+
+  /* Animated background */
+  body::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background:
+      radial-gradient(ellipse 60% 40% at 20% 20%, rgba(124,106,255,0.08) 0%, transparent 60%),
+      radial-gradient(ellipse 40% 60% at 80% 80%, rgba(255,106,176,0.06) 0%, transparent 60%);
+    pointer-events: none;
+    z-index: 0;
+  }
+
+  /* ── Header ── */
+  header {
+    position: relative;
+    z-index: 10;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 16px 28px;
+    border-bottom: 1px solid var(--border);
+    background: rgba(10,10,15,0.8);
+    backdrop-filter: blur(20px);
+  }
+
+  .logo {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+
+  .logo-icon {
+    width: 36px;
+    height: 36px;
+    background: linear-gradient(135deg, var(--accent), var(--accent2));
+    border-radius: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 18px;
+    box-shadow: 0 0 20px var(--glow);
+  }
+
+  .logo-text {
+    font-size: 20px;
+    font-weight: 800;
+    letter-spacing: -0.5px;
+    background: linear-gradient(135deg, var(--text) 40%, var(--accent));
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+  }
+
+  .header-actions {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+
+  .tab-btn {
+    padding: 7px 16px;
+    border-radius: 8px;
+    border: 1px solid var(--border);
+    background: transparent;
+    color: var(--text-muted);
+    font-family: 'Syne', sans-serif;
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s;
+    letter-spacing: 0.3px;
+  }
+
+  .tab-btn:hover { color: var(--text); border-color: var(--accent); }
+  .tab-btn.active {
+    background: var(--accent);
+    border-color: var(--accent);
+    color: #fff;
+    box-shadow: 0 0 16px rgba(124,106,255,0.4);
+  }
+
+  .status-dot {
+    width: 8px; height: 8px;
+    background: var(--accent3);
+    border-radius: 50%;
+    box-shadow: 0 0 8px var(--accent3);
+    animation: pulse 2s infinite;
+  }
+
+  @keyframes pulse {
+    0%, 100% { opacity: 1; transform: scale(1); }
+    50% { opacity: 0.6; transform: scale(0.85); }
+  }
+
+  /* ── Main Layout ── */
+  .main {
+    position: relative;
+    z-index: 1;
+    flex: 1;
+    display: flex;
+    overflow: hidden;
+  }
+
+  /* ── Sidebar ── */
+  .sidebar {
+    width: 260px;
+    border-right: 1px solid var(--border);
+    background: var(--surface);
+    display: flex;
+    flex-direction: column;
+    padding: 20px 16px;
+    gap: 8px;
+  }
+
+  .sidebar-label {
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: 1.5px;
+    color: var(--text-muted);
+    text-transform: uppercase;
+    padding: 0 8px;
+    margin-bottom: 4px;
+    margin-top: 8px;
+  }
+
+  .sidebar-btn {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 10px 12px;
+    border-radius: 10px;
+    border: 1px solid transparent;
+    background: transparent;
+    color: var(--text-muted);
+    font-family: 'Syne', sans-serif;
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s;
+    text-align: left;
+    width: 100%;
+  }
+
+  .sidebar-btn:hover {
+    background: var(--surface2);
+    color: var(--text);
+    border-color: var(--border);
+  }
+
+  .sidebar-btn.active {
+    background: var(--glow);
+    color: var(--accent);
+    border-color: rgba(124,106,255,0.3);
+  }
+
+  .sidebar-btn .icon { font-size: 16px; width: 20px; text-align: center; }
+
+  .new-session-btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    padding: 10px;
+    border-radius: 10px;
+    border: 1px dashed var(--border);
+    background: transparent;
+    color: var(--text-muted);
+    font-family: 'Syne', sans-serif;
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s;
+    width: 100%;
+    margin-top: 4px;
+  }
+
+  .new-session-btn:hover {
+    border-color: var(--accent);
+    color: var(--accent);
+    background: var(--glow);
+  }
+
+  .session-info {
+    margin-top: auto;
+    padding: 12px;
+    background: var(--surface2);
+    border-radius: 10px;
+    border: 1px solid var(--border);
+  }
+
+  .session-info .label { font-size: 10px; color: var(--text-muted); font-weight: 700; letter-spacing: 1px; text-transform: uppercase; margin-bottom: 6px; }
+  .session-id-text {
+    font-family: 'DM Mono', monospace;
+    font-size: 10px;
+    color: var(--accent3);
+    word-break: break-all;
+    line-height: 1.5;
+  }
+
+  /* ── Chat Panel ── */
+  .panel {
+    flex: 1;
+    display: none;
+    flex-direction: column;
+    overflow: hidden;
+  }
+  .panel.active { display: flex; }
+
+  /* ── Messages ── */
+  .messages {
+    flex: 1;
+    overflow-y: auto;
+    padding: 28px 32px;
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+    scroll-behavior: smooth;
+  }
+
+  .messages::-webkit-scrollbar { width: 4px; }
+  .messages::-webkit-scrollbar-track { background: transparent; }
+  .messages::-webkit-scrollbar-thumb { background: var(--border); border-radius: 2px; }
+
+  .message {
+    display: flex;
+    gap: 14px;
+    align-items: flex-start;
+    animation: fadeUp 0.3s ease;
+  }
+
+  @keyframes fadeUp {
+    from { opacity: 0; transform: translateY(12px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  .message.user { flex-direction: row-reverse; }
+
+  .avatar {
+    width: 34px; height: 34px;
+    border-radius: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 14px;
+    flex-shrink: 0;
+  }
+
+  .avatar.ai {
+    background: linear-gradient(135deg, var(--accent), var(--accent2));
+    box-shadow: 0 0 16px rgba(124,106,255,0.3);
+  }
+
+  .avatar.user {
+    background: var(--surface2);
+    border: 1px solid var(--border);
+  }
+
+  .bubble {
+    max-width: 68%;
+    padding: 14px 18px;
+    border-radius: 16px;
+    font-size: 14px;
+    line-height: 1.7;
+    font-family: 'DM Mono', monospace;
+    font-weight: 300;
+  }
+
+  .message.ai .bubble {
+    background: var(--ai-bubble);
+    border: 1px solid var(--border);
+    border-top-left-radius: 4px;
+    color: var(--text);
+  }
+
+  .message.user .bubble {
+    background: var(--user-bubble);
+    border: 1px solid rgba(124,106,255,0.25);
+    border-top-right-radius: 4px;
+    color: var(--text);
+  }
+
+  .bubble .meta {
+    font-size: 10px;
+    color: var(--text-muted);
+    margin-top: 8px;
+    font-family: 'Syne', sans-serif;
+    font-weight: 600;
+    letter-spacing: 0.5px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .audio-btn {
+    background: none;
+    border: none;
+    cursor: pointer;
+    color: var(--accent);
+    font-size: 14px;
+    padding: 0;
+    transition: transform 0.2s;
+  }
+  .audio-btn:hover { transform: scale(1.2); }
+
+  .typing-indicator {
+    display: flex;
+    gap: 5px;
+    padding: 14px 18px;
+    background: var(--ai-bubble);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    border-top-left-radius: 4px;
+    width: fit-content;
+  }
+
+  .typing-dot {
+    width: 6px; height: 6px;
+    background: var(--text-muted);
+    border-radius: 50%;
+    animation: bounce 1.2s infinite;
+  }
+  .typing-dot:nth-child(2) { animation-delay: 0.2s; }
+  .typing-dot:nth-child(3) { animation-delay: 0.4s; }
+
+  @keyframes bounce {
+    0%, 60%, 100% { transform: translateY(0); }
+    30% { transform: translateY(-6px); }
+  }
+
+  /* ── Input Area ── */
+  .input-area {
+    padding: 20px 32px 24px;
+    border-top: 1px solid var(--border);
+    background: rgba(10,10,15,0.6);
+    backdrop-filter: blur(10px);
+  }
+
+  .input-row {
+    display: flex;
+    gap: 10px;
+    align-items: flex-end;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    padding: 10px 12px;
+    transition: border-color 0.2s;
+  }
+
+  .input-row:focus-within {
+    border-color: var(--accent);
+    box-shadow: 0 0 0 3px rgba(124,106,255,0.1);
+  }
+
+  textarea {
+    flex: 1;
+    background: transparent;
+    border: none;
+    outline: none;
+    color: var(--text);
+    font-family: 'DM Mono', monospace;
+    font-size: 13px;
+    font-weight: 300;
+    resize: none;
+    min-height: 22px;
+    max-height: 120px;
+    line-height: 1.6;
+    padding: 2px 0;
+  }
+
+  textarea::placeholder { color: var(--text-muted); }
+
+  .send-btn {
+    width: 36px; height: 36px;
+    background: var(--accent);
+    border: none;
+    border-radius: 10px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 16px;
+    transition: all 0.2s;
+    flex-shrink: 0;
+    box-shadow: 0 0 16px rgba(124,106,255,0.3);
+  }
+
+  .send-btn:hover { background: #9580ff; transform: scale(1.05); }
+  .send-btn:disabled { opacity: 0.4; cursor: not-allowed; transform: none; }
+
+  .input-hints {
+    display: flex;
+    gap: 8px;
+    margin-top: 10px;
+    flex-wrap: wrap;
+  }
+
+  .hint-btn {
+    padding: 5px 12px;
+    border-radius: 20px;
+    border: 1px solid var(--border);
+    background: transparent;
+    color: var(--text-muted);
+    font-family: 'Syne', sans-serif;
+    font-size: 11px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s;
+    letter-spacing: 0.3px;
+  }
+
+  .hint-btn:hover {
+    border-color: var(--accent);
+    color: var(--accent);
+    background: var(--glow);
+  }
+
+  /* ── Voice Panel ── */
+  .voice-panel {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 32px;
+    padding: 40px;
+  }
+
+  .voice-circle {
+    width: 160px; height: 160px;
+    border-radius: 50%;
+    background: var(--surface);
+    border: 2px solid var(--border);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 52px;
+    cursor: pointer;
+    transition: all 0.3s;
+    position: relative;
+  }
+
+  .voice-circle::before {
+    content: '';
+    position: absolute;
+    inset: -12px;
+    border-radius: 50%;
+    border: 1px solid rgba(124,106,255,0.2);
+    animation: ringPulse 2s infinite;
+  }
+
+  .voice-circle::after {
+    content: '';
+    position: absolute;
+    inset: -24px;
+    border-radius: 50%;
+    border: 1px solid rgba(124,106,255,0.1);
+    animation: ringPulse 2s infinite 0.5s;
+  }
+
+  @keyframes ringPulse {
+    0%, 100% { transform: scale(1); opacity: 1; }
+    50% { transform: scale(1.05); opacity: 0.5; }
+  }
+
+  .voice-circle:hover {
+    border-color: var(--accent);
+    box-shadow: 0 0 40px rgba(124,106,255,0.3);
+    transform: scale(1.03);
+  }
+
+  .voice-circle.recording {
+    border-color: var(--accent2);
+    box-shadow: 0 0 40px rgba(255,106,176,0.4);
+    animation: recordPulse 1s infinite;
+  }
+
+  @keyframes recordPulse {
+    0%, 100% { transform: scale(1); }
+    50% { transform: scale(1.04); }
+  }
+
+  .voice-label {
+    font-size: 16px;
+    font-weight: 700;
+    color: var(--text-muted);
+    text-align: center;
+    letter-spacing: 0.5px;
+  }
+
+  .voice-transcript {
+    max-width: 500px;
+    width: 100%;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    padding: 20px;
+    font-family: 'DM Mono', monospace;
+    font-size: 13px;
+    color: var(--text-muted);
+    min-height: 80px;
+    line-height: 1.7;
+  }
+
+  /* ── PDF Panel ── */
+  .pdf-panel {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 0;
+    overflow: hidden;
+  }
+
+  .pdf-upload-zone {
+    margin: 24px 32px 0;
+    border: 2px dashed var(--border);
+    border-radius: 14px;
+    padding: 28px;
+    text-align: center;
+    cursor: pointer;
+    transition: all 0.2s;
+    background: var(--surface);
+  }
+
+  .pdf-upload-zone:hover, .pdf-upload-zone.drag-over {
+    border-color: var(--accent);
+    background: var(--glow);
+  }
+
+  .pdf-upload-zone .upload-icon { font-size: 32px; margin-bottom: 10px; }
+  .pdf-upload-zone .upload-text { font-size: 14px; font-weight: 700; color: var(--text); margin-bottom: 4px; }
+  .pdf-upload-zone .upload-sub { font-size: 12px; color: var(--text-muted); }
+
+  .pdf-list {
+    margin: 16px 32px 0;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+  }
+
+  .pdf-item {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 12px 16px;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    font-size: 13px;
+    font-weight: 600;
+  }
+
+  .pdf-item .pdf-icon { font-size: 18px; }
+  .pdf-item .pdf-name { flex: 1; color: var(--text); }
+  .pdf-item .pdf-chunks { font-size: 11px; color: var(--accent3); font-family: 'DM Mono', monospace; }
+  .pdf-item .pdf-delete {
+    background: none; border: none; cursor: pointer;
+    color: var(--text-muted); font-size: 14px;
+    transition: color 0.2s; padding: 2px 6px;
+    border-radius: 4px;
+  }
+  .pdf-item .pdf-delete:hover { color: var(--accent2); background: rgba(255,106,176,0.1); }
+
+  .pdf-query-area {
+    flex: 1;
+    padding: 20px 32px 24px;
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+    overflow-y: auto;
+  }
+
+  .pdf-answer {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    padding: 20px;
+    font-family: 'DM Mono', monospace;
+    font-size: 13px;
+    color: var(--text);
+    line-height: 1.7;
+    animation: fadeUp 0.3s ease;
+  }
+
+  .pdf-answer .answer-label {
+    font-family: 'Syne', sans-serif;
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: 1.5px;
+    text-transform: uppercase;
+    color: var(--accent);
+    margin-bottom: 10px;
+  }
+
+  /* ── Toast ── */
+  .toast {
+    position: fixed;
+    bottom: 32px;
+    right: 32px;
+    padding: 12px 20px;
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--text);
+    z-index: 1000;
+    animation: fadeUp 0.3s ease;
+    box-shadow: 0 8px 32px rgba(0,0,0,0.5);
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .toast.success { border-color: var(--accent3); color: var(--accent3); }
+  .toast.error { border-color: var(--accent2); color: var(--accent2); }
+
+  /* ── Welcome ── */
+  .welcome {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    height: 100%;
+    gap: 16px;
+    text-align: center;
+    padding: 40px;
+    color: var(--text-muted);
+  }
+
+  .welcome .big-icon { font-size: 56px; margin-bottom: 8px; }
+  .welcome h2 { font-size: 22px; font-weight: 800; color: var(--text); letter-spacing: -0.5px; }
+  .welcome p { font-size: 14px; line-height: 1.7; max-width: 360px; font-family: 'DM Mono', monospace; font-weight: 300; }
+
+  /* ── Misc ── */
+  input[type="file"] { display: none; }
+
+  .spinner {
+    width: 16px; height: 16px;
+    border: 2px solid rgba(255,255,255,0.2);
+    border-top-color: #fff;
+    border-radius: 50%;
+    animation: spin 0.7s linear infinite;
+    display: inline-block;
+  }
+
+  @keyframes spin { to { transform: rotate(360deg); } }
+
+  .streaming-cursor {
+    display: inline-block;
+    width: 2px; height: 14px;
+    background: var(--accent);
+    margin-left: 2px;
+    vertical-align: middle;
+    animation: blink 0.8s infinite;
+  }
+
+  @keyframes blink {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0; }
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="logo">
+    <div class="logo-icon">🤖</div>
+    <span class="logo-text">ChitChat</span>
+  </div>
+  <div class="header-actions">
+    <button class="tab-btn active" onclick="switchTab('chat')">💬 Chat</button>
+    <button class="tab-btn" onclick="switchTab('voice')">🎙 Voice</button>
+    <button class="tab-btn" onclick="switchTab('pdf')">📄 PDF</button>
+    <div class="status-dot" title="API Connected"></div>
+  </div>
+</header>
+
+<div class="main">
+  <!-- Sidebar -->
+  <div class="sidebar">
+    <div class="sidebar-label">Mode</div>
+    <button class="sidebar-btn active" onclick="setMode('chat')" id="mode-chat">
+      <span class="icon">💬</span> Text Chat
+    </button>
+    <button class="sidebar-btn" onclick="setMode('stream')" id="mode-stream">
+      <span class="icon">⚡</span> Stream Mode
+    </button>
+
+    <div class="sidebar-label">Session</div>
+    <button class="new-session-btn" onclick="newSession()">
+      ＋ New Session
+    </button>
+
+    <div class="sidebar-label">Actions</div>
+    <button class="sidebar-btn" onclick="clearHistory()">
+      <span class="icon">🗑</span> Clear History
+    </button>
+    <button class="sidebar-btn" onclick="fetchHistory()">
+      <span class="icon">📋</span> View History
+    </button>
+
+    <div class="session-info">
+      <div class="label">Session ID</div>
+      <div class="session-id-text" id="session-display">—</div>
+    </div>
+  </div>
+
+  <!-- Chat Panel -->
+  <div class="panel active" id="panel-chat">
+    <div class="messages" id="messages">
+      <div class="welcome">
+        <div class="big-icon">✦</div>
+        <h2>Ready to chat</h2>
+        <p>Ask me anything. I remember our conversations and can analyse your PDFs.</p>
+      </div>
+    </div>
+    <div class="input-area">
+      <div class="input-row">
+        <textarea id="msg-input" placeholder="Type a message..." rows="1"
+          onkeydown="handleKey(event)" oninput="autoResize(this)"></textarea>
+        <button class="send-btn" id="send-btn" onclick="sendMessage()">➤</button>
+      </div>
+      <div class="input-hints">
+        <button class="hint-btn" onclick="setPrompt('Summarise our conversation so far')">Summarise</button>
+        <button class="hint-btn" onclick="setPrompt('What can you help me with?')">Capabilities</button>
+        <button class="hint-btn" onclick="setPrompt('Tell me something interesting')">Surprise me</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Voice Panel -->
+  <div class="panel" id="panel-voice">
+    <div class="voice-panel">
+      <div class="voice-circle" id="voice-circle" onclick="toggleRecording()">🎙</div>
+      <div class="voice-label" id="voice-label">Click to record</div>
+      <div class="voice-transcript" id="voice-transcript">Your transcript and response will appear here...</div>
+    </div>
+  </div>
+
+  <!-- PDF Panel -->
+  <div class="panel" id="panel-pdf">
+    <div class="pdf-panel">
+      <div class="pdf-upload-zone" id="drop-zone" onclick="document.getElementById('pdf-file').click()"
+        ondragover="e => { e.preventDefault(); this.classList.add('drag-over'); }"
+        ondragleave="this.classList.remove('drag-over')"
+        ondrop="handleDrop(event)">
+        <div class="upload-icon">📂</div>
+        <div class="upload-text">Drop PDF here or click to upload</div>
+        <div class="upload-sub">Supports .pdf files up to 50MB</div>
+      </div>
+      <input type="file" id="pdf-file" accept=".pdf" onchange="uploadPDF(this)">
+
+      <div class="pdf-list" id="pdf-list"></div>
+
+      <div class="pdf-query-area" id="pdf-query-area">
+        <div class="input-row" style="margin: 0;">
+          <textarea id="pdf-question" placeholder="Ask a question about your PDF..." rows="1"
+            onkeydown="handlePdfKey(event)" oninput="autoResize(this)"></textarea>
+          <button class="send-btn" onclick="queryPDF()">➤</button>
+        </div>
+        <div id="pdf-answers"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+const API = 'http://localhost:8000';
+let sessionId = null;
+let isRecording = false;
+let mediaRecorder = null;
+let audioChunks = [];
+let currentMode = 'chat';
+let currentPdf = null;
+
+// ── Init ──────────────────────────────────────
+async function init() {
+  await newSession();
+  await loadPDFs();
+}
+
+async function newSession() {
+  try {
+    const r = await fetch(`${API}/chat/session`, { method: 'POST' });
+    const d = await r.json();
+    sessionId = d.session_id;
+    document.getElementById('session-display').textContent = sessionId.slice(0, 8) + '...';
+    showToast('✦ New session created', 'success');
+    clearMessages();
+  } catch(e) {
+    showToast('⚠ Could not connect to API', 'error');
+  }
+}
+
+// ── Tab & Mode ────────────────────────────────
+function switchTab(tab) {
+  document.querySelectorAll('.tab-btn').forEach((b,i) => {
+    b.classList.toggle('active', ['chat','voice','pdf'][i] === tab);
+  });
+  document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
+  document.getElementById(`panel-${tab}`).classList.add('active');
+}
+
+function setMode(mode) {
+  currentMode = mode;
+  document.querySelectorAll('[id^="mode-"]').forEach(b => b.classList.remove('active'));
+  document.getElementById(`mode-${mode}`).classList.add('active');
+  showToast(mode === 'stream' ? '⚡ Stream mode on' : '💬 Chat mode on');
+}
+
+// ── Messaging ─────────────────────────────────
+function handleKey(e) {
+  if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); sendMessage(); }
+}
+
+function setPrompt(text) {
+  document.getElementById('msg-input').value = text;
+  document.getElementById('msg-input').focus();
+}
+
+function autoResize(el) {
+  el.style.height = 'auto';
+  el.style.height = Math.min(el.scrollHeight, 120) + 'px';
+}
+
+async function sendMessage() {
+  const input = document.getElementById('msg-input');
+  const text = input.value.trim();
+  if (!text || !sessionId) return;
+
+  input.value = '';
+  input.style.height = 'auto';
+  document.getElementById('send-btn').disabled = true;
+
+  addMessage('user', text);
+
+  if (currentMode === 'stream') {
+    await sendStream(text);
+  } else {
+    await sendChat(text);
+  }
+
+  document.getElementById('send-btn').disabled = false;
+}
+
+async function sendChat(text) {
+  const typingId = addTyping();
+  try {
+    const r = await fetch(`${API}/chat/message`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ message: text, session_id: sessionId, return_audio: false })
+    });
+    const d = await r.json();
+    removeTyping(typingId);
+    const reply = d.assistant_response || d.detail || 'No response received.';
+    addMessage('ai', reply, { memory: d.memory_used, lang: d.language });
+  } catch(e) {
+    removeTyping(typingId);
+    addMessage('ai', '⚠ Error connecting to API. Make sure the server is running.');
+  }
+}
+
+async function sendStream(text) {
+  const msgId = 'msg-' + Date.now();
+  addStreamMessage(msgId);
+
+  try {
+    const es = new EventSource(`${API}/chat/stream?message=${encodeURIComponent(text)}&session_id=${sessionId}`);
+    const bubble = document.getElementById(msgId);
+
+    es.onmessage = (e) => {
+      if (e.data === '[DONE]') { es.close(); finishStream(msgId); return; }
+      if (e.data.startsWith('[ERROR]')) { es.close(); bubble.textContent = e.data; return; }
+      bubble.innerHTML = (bubble.innerHTML.replace('<span class="streaming-cursor"></span>', '') || '') + e.data + '<span class="streaming-cursor"></span>';
+      scrollToBottom();
+    };
+
+    es.onerror = () => { es.close(); finishStream(msgId); };
+  } catch(e) {
+    document.getElementById(msgId).textContent = '⚠ Stream error.';
+  }
+}
+
+function finishStream(msgId) {
+  const el = document.getElementById(msgId);
+  if (el) el.innerHTML = el.innerHTML.replace('<span class="streaming-cursor"></span>', '');
+}
+
+// ── Message Rendering ─────────────────────────
+function clearMessages() {
+  document.getElementById('messages').innerHTML = `
+    <div class="welcome">
+      <div class="big-icon">✦</div>
+      <h2>Ready to chat</h2>
+      <p>Ask me anything. I remember our conversations and can analyse your PDFs.</p>
+    </div>`;
+}
+
+function addMessage(role, text, meta = {}) {
+  const msgs = document.getElementById('messages');
+  const welcome = msgs.querySelector('.welcome');
+  if (welcome) welcome.remove();
+
+  const div = document.createElement('div');
+  div.className = `message ${role}`;
+
+  const metaHtml = meta.memory !== undefined
+    ? `<div class="meta">RAG: ${meta.memory} chunks · ${meta.lang || 'en'}</div>` : '';
+
+  div.innerHTML = `
+    <div class="avatar ${role}">${role === 'ai' ? '🤖' : '👤'}</div>
+    <div class="bubble">${escHtml(text)}${metaHtml}</div>`;
+
+  msgs.appendChild(div);
+  scrollToBottom();
+}
+
+function addStreamMessage(id) {
+  const msgs = document.getElementById('messages');
+  const welcome = msgs.querySelector('.welcome');
+  if (welcome) welcome.remove();
+
+  const div = document.createElement('div');
+  div.className = 'message ai';
+  div.innerHTML = `
+    <div class="avatar ai">🤖</div>
+    <div class="bubble" id="${id}"><span class="streaming-cursor"></span></div>`;
+  msgs.appendChild(div);
+  scrollToBottom();
+}
+
+let typingCounter = 0;
+function addTyping() {
+  const id = 'typing-' + (++typingCounter);
+  const msgs = document.getElementById('messages');
+  const div = document.createElement('div');
+  div.className = 'message ai';
+  div.id = id;
+  div.innerHTML = `
+    <div class="avatar ai">🤖</div>
+    <div class="typing-indicator">
+      <div class="typing-dot"></div>
+      <div class="typing-dot"></div>
+      <div class="typing-dot"></div>
+    </div>`;
+  msgs.appendChild(div);
+  scrollToBottom();
+  return id;
+}
+
+function removeTyping(id) {
+  const el = document.getElementById(id);
+  if (el) el.remove();
+}
+
+function scrollToBottom() {
+  const msgs = document.getElementById('messages');
+  msgs.scrollTop = msgs.scrollHeight;
+}
+
+// ── History ───────────────────────────────────
+async function fetchHistory() {
+  if (!sessionId) return;
+  try {
+    const r = await fetch(`${API}/chat/history/${sessionId}`);
+    const d = await r.json();
+    clearMessages();
+    d.history.forEach(turn => {
+      addMessage(turn.role === 'user' ? 'user' : 'ai', turn.content);
+    });
+    showToast(`📋 Loaded ${d.turns} turns`);
+  } catch(e) { showToast('⚠ Failed to fetch history', 'error'); }
+}
+
+async function clearHistory() {
+  if (!sessionId) return;
+  try {
+    await fetch(`${API}/chat/session/${sessionId}/clear`, { method: 'DELETE' });
+    clearMessages();
+    showToast('🗑 History cleared');
+  } catch(e) { showToast('⚠ Failed to clear', 'error'); }
+}
+
+// ── Voice ─────────────────────────────────────
+async function toggleRecording() {
+  if (!isRecording) {
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      mediaRecorder = new MediaRecorder(stream);
+      audioChunks = [];
+      mediaRecorder.ondataavailable = e => audioChunks.push(e.data);
+      mediaRecorder.onstop = sendVoice;
+      mediaRecorder.start();
+      isRecording = true;
+      document.getElementById('voice-circle').classList.add('recording');
+      document.getElementById('voice-circle').textContent = '⏹';
+      document.getElementById('voice-label').textContent = 'Recording... click to stop';
+    } catch(e) {
+      showToast('⚠ Microphone access denied', 'error');
+    }
+  } else {
+    mediaRecorder.stop();
+    isRecording = false;
+    document.getElementById('voice-circle').classList.remove('recording');
+    document.getElementById('voice-circle').textContent = '🎙';
+    document.getElementById('voice-label').textContent = 'Processing...';
+  }
+}
+
+async function sendVoice() {
+  const blob = new Blob(audioChunks, { type: 'audio/wav' });
+  const form = new FormData();
+  form.append('audio', blob, 'recording.wav');
+  form.append('session_id', sessionId || '');
+  form.append('return_audio', 'true');
+
+  document.getElementById('voice-transcript').textContent = 'Sending to API...';
+
+  try {
+    const r = await fetch(`${API}/chat/voice`, { method: 'POST', body: form });
+    const d = await r.json();
+    document.getElementById('voice-transcript').textContent =
+      `You: ${d.user_message}\n\nAssistant: ${d.assistant_response}`;
+    document.getElementById('voice-label').textContent = 'Click to record';
+
+    if (d.audio_base64) {
+      const audio = new Audio('data:audio/mpeg;base64,' + d.audio_base64);
+      audio.play();
+    }
+  } catch(e) {
+    document.getElementById('voice-transcript').textContent = '⚠ Error processing voice.';
+    document.getElementById('voice-label').textContent = 'Click to record';
+  }
+}
+
+// ── PDF ───────────────────────────────────────
+async function loadPDFs() {
+  try {
+    const r = await fetch(`${API}/pdf/list`);
+    const d = await r.json();
+    renderPDFList(d.pdfs);
+  } catch(e) {}
+}
+
+function renderPDFList(pdfs) {
+  const list = document.getElementById('pdf-list');
+  list.innerHTML = '';
+  if (!pdfs.length) return;
+  pdfs.forEach(name => {
+    const div = document.createElement('div');
+    div.className = 'pdf-item';
+    div.innerHTML = `
+      <span class="pdf-icon">📄</span>
+      <span class="pdf-name">${escHtml(name)}</span>
+      <span class="pdf-chunks">indexed</span>
+      <button class="pdf-delete" onclick="deletePDF('${escHtml(name)}')">✕</button>`;
+    list.appendChild(div);
+  });
+}
+
+async function uploadPDF(input) {
+  const file = input.files[0];
+  if (!file) return;
+  showToast('📤 Uploading PDF...');
+
+  const form = new FormData();
+  form.append('file', file);
+
+  try {
+    const r = await fetch(`${API}/pdf/upload`, { method: 'POST', body: form });
+    const d = await r.json();
+    currentPdf = d.pdf_name;
+    showToast(`✅ ${d.total_chunks} chunks indexed`, 'success');
+    await loadPDFs();
+  } catch(e) {
+    showToast('⚠ Upload failed', 'error');
+  }
+  input.value = '';
+}
+
+async function deletePDF(name) {
+  try {
+    await fetch(`${API}/pdf/${encodeURIComponent(name)}`, { method: 'DELETE' });
+    showToast(`🗑 Deleted ${name}`);
+    if (currentPdf === name) currentPdf = null;
+    await loadPDFs();
+  } catch(e) { showToast('⚠ Delete failed', 'error'); }
+}
+
+function handleDrop(e) {
+  e.preventDefault();
+  document.getElementById('drop-zone').classList.remove('drag-over');
+  const file = e.dataTransfer.files[0];
+  if (file && file.name.endsWith('.pdf')) {
+    const dt = new DataTransfer();
+    dt.items.add(file);
+    const input = document.getElementById('pdf-file');
+    input.files = dt.files;
+    uploadPDF(input);
+  }
+}
+
+function handlePdfKey(e) {
+  if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); queryPDF(); }
+}
+
+async function queryPDF() {
+  const q = document.getElementById('pdf-question').value.trim();
+  if (!q) return;
+  document.getElementById('pdf-question').value = '';
+
+  const answers = document.getElementById('pdf-answers');
+
+  // user question
+  const userDiv = document.createElement('div');
+  userDiv.className = 'pdf-answer';
+  userDiv.innerHTML = `<div class="answer-label">Your Question</div>${escHtml(q)}`;
+  answers.appendChild(userDiv);
+
+  const loadDiv = document.createElement('div');
+  loadDiv.className = 'pdf-answer';
+  loadDiv.innerHTML = `<div class="answer-label">Answer</div><span class="spinner"></span>`;
+  answers.appendChild(loadDiv);
+
+  try {
+    const r = await fetch(`${API}/pdf/query`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ question: q, pdf_name: currentPdf, return_audio: false })
+    });
+    const d = await r.json();
+    loadDiv.innerHTML = `<div class="answer-label">Answer · ${d.chunks_used} chunks used</div>${escHtml(d.answer)}`;
+  } catch(e) {
+    loadDiv.innerHTML = `<div class="answer-label">Error</div>⚠ Failed to query PDF.`;
+  }
+
+  answers.scrollTop = answers.scrollHeight;
+}
+
+// ── Toast ─────────────────────────────────────
+function showToast(msg, type = '') {
+  const existing = document.querySelector('.toast');
+  if (existing) existing.remove();
+  const t = document.createElement('div');
+  t.className = `toast ${type}`;
+  t.textContent = msg;
+  document.body.appendChild(t);
+  setTimeout(() => t.remove(), 3000);
+}
+
+// ── Utils ─────────────────────────────────────
+function escHtml(str) {
+  return String(str)
+    .replace(/&/g,'&amp;').replace(/</g,'&lt;')
+    .replace(/>/g,'&gt;').replace(/"/g,'&quot;')
+    .replace(/\n/g,'<br>');
+}
+
+init();
+</script>
+</body>
+</html>
